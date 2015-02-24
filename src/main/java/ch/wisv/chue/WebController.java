@@ -15,9 +15,8 @@ public class WebController {
     HueController hue;
 
     @RequestMapping("/")
-    @ResponseBody
-    String home() {
-        return "Hello World!";
+    String index() {
+        return "index";
     }
 
     @RequestMapping("/random")
@@ -41,4 +40,6 @@ public class WebController {
     String bestuur54() {
         return oranje();
     }
+    
+    // TOOD: call that accepts hex color string as parameter
 }
