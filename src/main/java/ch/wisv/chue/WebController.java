@@ -35,4 +35,10 @@ public class WebController {
         hue.changeLights("3", "#FFA723");
         return "B'voranje";
     }
+
+    @RequestMapping("/54")
+    @ResponseBody
+    String bestuur54() {
+        return oranje();
+    }
 }
