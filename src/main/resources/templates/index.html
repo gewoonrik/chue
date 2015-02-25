@@ -47,12 +47,10 @@
         <p>
             <label>
                 Light(s):
-                <select name="id" id="selected_light_id">
-                    <!-- TODO: Get this from Hue API -->
-                    <option value="all">All</option>
-                    <option value="1">Koffiezetapparaat</option>
-                    <option value="2">Boekenplank</option>
-                    <option value="3">TV</option>
+                <select multiple="multiple" id="selected_light_ids">
+                    <option th:each="light : ${lights}"
+                            th:value="${light.identifier}"
+                            th:text="${light.name}">Light Name</option>
                 </select>
             </label>
             <br/>
@@ -129,7 +127,7 @@
             url: '/color',
             data: {
                 "hex": event.currentTarget.value,
-                "id": $("#selected_light_id").val(),
+                "ids": $("#selected_light_ids").val(),
                 "transition_time": transition_time
             }
           });

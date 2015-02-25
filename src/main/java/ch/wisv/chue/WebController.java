@@ -2,8 +2,10 @@ package ch.wisv.chue;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.ui.Model;
+
+import java.util.List;
 
 /**
  * Spring MVC Web Controller
@@ -15,7 +17,8 @@ public class WebController {
     HueController hue;
 
     @RequestMapping("/")
-    String index() {
+    String index(Model model) {
+        model.addAttribute("lights", hue.getLights());
         return "index";
     }
 
@@ -64,8 +67,8 @@ public class WebController {
 
     @RequestMapping(value = "/color", method = RequestMethod.POST)
     @ResponseBody
-    String colorPost(@RequestParam String id, @RequestParam String hex) {
-        hue.changeLights(id, hex);
+    String colorPost(@RequestParam List<String> ids, @RequestParam String hex, @RequestParam int transitionTime) {
+        hue.changeLights(ids, hex, transitionTime);
         return "OK";
     }
 }

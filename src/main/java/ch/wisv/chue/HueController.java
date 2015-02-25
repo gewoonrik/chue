@@ -13,8 +13,8 @@ import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
 import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 
 @Controller
 public class HueController {
@@ -124,12 +124,7 @@ public class HueController {
         }
     }
 
-    public void changeLights(String lightIdentifer, String rgb) {
-        Color color = Color.decode(rgb);
-        changeLights(lightIdentifer, color);
-    }
-
-    public void changeLights(String lightIdentifer, Color color) {
+    public void changeLights(String lightIdentifer, Color color, int transitionTime) {
         if ("all".equals(lightIdentifer)) {
             List<PHLight> allLights = cache.getAllLights();
             for (PHLight light : allLights) {
@@ -142,8 +137,40 @@ public class HueController {
             lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
             lightState.setX(xy[0]);
             lightState.setY(xy[1]);
+            lightState.setTransitionTime(transitionTime);
 
             phHueSDK.getSelectedBridge().updateLightState(lightIdentifer, lightState, null);
         }
+    }
+
+    public void changeLights(List<String> lightIdentifers, Color color, int transitionTime) {
+        for(String id : lightIdentifers) {
+            changeLights(id, color, transitionTime);
+        }
+    }
+
+    public void changeLights(List<String> lightIdentifers, Color color) {
+        changeLights(lightIdentifers, color, 400);
+    }
+
+    public void changeLights(List<String> lightIdentifers, String rgb, int transitionTime) {
+        Color color = Color.decode(rgb);
+        changeLights(lightIdentifers, color, transitionTime);
+    }
+
+    public void changeLights(List<String> lightIdentifers, String rgb) {
+        changeLights(lightIdentifers, rgb, 400);
+    }
+
+    public void changeLights(String lightIdentifier, String rgb) {
+        changeLights(Arrays.asList(lightIdentifier), rgb);
+    }
+
+    public void changeLights(String lightIdentifier, Color color) {
+        changeLights(Arrays.asList(lightIdentifier), color);
+    }
+
+    public List<PHLight> getLights() {
+        return cache.getAllLights();
     }
 }
