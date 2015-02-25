@@ -44,27 +44,23 @@
             Welcome to the CHue Application!
         </p>
 
-        <form method="post" action="#" id="changeColorForm">
-            <p>
-                <label>
-                    Color:
-                    <input type="color" name="hex" value="#FFA723"/>
-                </label>
-                <br/>
-                <label>
-                    Light(s):
-                    <select name="id">
-                        <!-- TODO: Get this from Hue API -->
-                        <option value="all">All</option>
-                        <option value="1">Koffiezetapparaat</option>
-                        <option value="2">Boekenplank</option>
-                        <option value="3">TV</option>
-                    </select>
-                </label>
-                <br/>
-                <input type="submit" value="Go!"/>
-            </p>
-        </form>
+        <p>
+            <label>
+                Light(s):
+                <select name="id" id="selected_light_id">
+                    <!-- TODO: Get this from Hue API -->
+                    <option value="all">All</option>
+                    <option value="1">Koffiezetapparaat</option>
+                    <option value="2">Boekenplank</option>
+                    <option value="3">TV</option>
+                </select>
+            </label>
+            <br/>
+            <label>
+                Color:
+                <input id="selected_light_color" type="color" name="hex" value="#FFA723"/>
+            </label>
+        </p>
     </div>
     <div>
         <h1>Endpoints</h1>
@@ -121,15 +117,17 @@
     </div>
     <div th:replace="fragments/footer :: footer">&copy; 2014 The Static Templates</div>
 </div>
-<script>
-    $("#changeColorForm").submit(function(e){
-      e.preventDefault();
+<script type="text/javascript">
 
-      $.ajax({
-        type: "POST",
-        url: '/color',
-        data: $(this).serialize()
-      });
+    $("#selected_light_color").on("input", function(event) {
+         $.ajax({
+            type: "POST",
+            url: '/color',
+            data: {
+                hex: event.currentTarget.value,
+                id: $("#selected_light_id").val()
+            }
+          });
     });
 </script>
 </body>
