@@ -118,16 +118,24 @@
     <div th:replace="fragments/footer :: footer">&copy; 2014 The Static Templates</div>
 </div>
 <script type="text/javascript">
+    var transition_time = 400;
+    var waiting = false;
 
     $("#selected_light_color").on("input", function(event) {
+        if(waiting) return;
+
          $.ajax({
             type: "POST",
             url: '/color',
             data: {
-                hex: event.currentTarget.value,
-                id: $("#selected_light_id").val()
+                "hex": event.currentTarget.value,
+                "id": $("#selected_light_id").val(),
+                "transition_time": transition_time
             }
           });
+
+          waiting = true;
+          setTimeout(function(){ waiting = false; }, transition_time);
     });
 </script>
 </body>
