@@ -44,7 +44,7 @@
             Welcome to the CHue Application!
         </p>
 
-        <form method="post" action="/color">
+        <form method="post" action="#" id="changeColorForm">
             <p>
                 <label>
                     Color:
@@ -121,5 +121,16 @@
     </div>
     <div th:replace="fragments/footer :: footer">&copy; 2014 The Static Templates</div>
 </div>
+<script>
+    $("#changeColorForm").submit(function(e){
+      e.preventDefault();
+
+      $.ajax({
+        type: "POST",
+        url: '/color',
+        data: $(this).serialize()
+      });
+    });
+</script>
 </body>
 </html>
