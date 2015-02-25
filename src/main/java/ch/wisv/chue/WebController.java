@@ -45,9 +45,7 @@ public class WebController {
     @RequestMapping("/oranje")
     @ResponseBody
     String oranje() {
-        hue.changeLights("1", "#FFA723");
-        hue.changeLights("2", "#FFA723");
-        hue.changeLights("3", "#FFA723");
+        hue.changeLights("all", "#FFA723");
         return "B'voranje";
     }
 
