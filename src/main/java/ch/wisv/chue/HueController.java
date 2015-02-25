@@ -113,17 +113,37 @@ public class HueController {
         }
     }
 
+    public void colorLoop() {
+        List<PHLight> allLights = cache.getAllLights();
+        Random rand = new Random();
+
+        for (PHLight light : allLights) {
+            PHLightState lightState = new PHLightState();
+            lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_COLORLOOP);
+            bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
+        }
+    }
+
     public void changeLights(String lightIdentifer, String rgb) {
         Color color = Color.decode(rgb);
         changeLights(lightIdentifer, color);
     }
 
     public void changeLights(String lightIdentifer, Color color) {
-        PHLightState lightState = new PHLightState();
-        float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
-        lightState.setX(xy[0]);
-        lightState.setY(xy[1]);
+        if ("all".equals(lightIdentifer)) {
+            List<PHLight> allLights = cache.getAllLights();
+            for (PHLight light : allLights) {
+                changeLights(light.getIdentifier(), color);
+            }
+        }
+        else {
+            PHLightState lightState = new PHLightState();
+            float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
+            lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
+            lightState.setX(xy[0]);
+            lightState.setY(xy[1]);
 
-        phHueSDK.getSelectedBridge().updateLightState(lightIdentifer, lightState, null);
+            phHueSDK.getSelectedBridge().updateLightState(lightIdentifer, lightState, null);
+        }
     }
 }

@@ -2,8 +2,8 @@ package ch.wisv.chue;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Spring MVC Web Controller
@@ -26,6 +26,22 @@ public class WebController {
         return "Randomised";
     }
 
+    @RequestMapping("/colorloop")
+    @ResponseBody
+    String colorLoop() {
+        hue.colorLoop();
+        return "Colorloop";
+    }
+
+    @RequestMapping("/randomcolorloop")
+    @ResponseBody
+    String randomColorLoop() {
+        hue.randomLights();
+        hue.colorLoop();
+        return "Random Colorloop";
+    }
+
+
     @RequestMapping("/oranje")
     @ResponseBody
     String oranje() {
@@ -41,5 +57,17 @@ public class WebController {
         return oranje();
     }
     
-    // TOOD: call that accepts hex color string as parameter
+    @RequestMapping(value = "/color/{id}/{hex}", method = RequestMethod.GET)
+    @ResponseBody
+    String color(@PathVariable String id, @PathVariable String hex) {
+        hue.changeLights(id, '#' + hex);
+        return "OK";
+    }
+
+    @RequestMapping(value = "/color", method = RequestMethod.POST)
+    @ResponseBody
+    String colorPost(@RequestParam String id, @RequestParam String hex) {
+        hue.changeLights(id, hex);
+        return "OK";
+    }
 }
