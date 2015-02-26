@@ -5,8 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 
-import java.util.Arrays;
-import java.util.List;
+import java.awt.*;
 
 /**
  * Spring MVC Web Controller
@@ -19,7 +18,7 @@ public class WebController {
 
     @RequestMapping("/")
     String index(Model model) {
-        model.addAttribute("lights", hue.getLights());
+        model.addAttribute("lights", hue.getAllLights());
         return "index";
     }
 
@@ -49,21 +48,25 @@ public class WebController {
     @RequestMapping({"/oranje", "/54"})
     @ResponseBody
     String oranje() {
-        hue.changeLights("all", "#FFA723");
+        hue.changeLights(Color.decode("#FFA723"));
         return "B'voranje";
     }
     
     @RequestMapping(value = "/color/{id}/{hex}", method = RequestMethod.GET)
     @ResponseBody
     String color(@PathVariable String id, @PathVariable String hex) {
-        hue.changeLights(id, '#' + hex);
+        if("all".equals(id)) {
+            hue.changeLights(Color.decode('#' + hex));
+        } else {
+            hue.changeLights(Color.decode('#' + hex), id);
+        }
         return "OK";
     }
 
     @RequestMapping(value = "/color", method = RequestMethod.POST)
     @ResponseBody
     String colorPost(@RequestParam(value = "id[]") String[] id, @RequestParam String hex, @RequestParam(defaultValue = "400") int transitionTime) {
-        hue.changeLights(id, hex, transitionTime);
+        hue.changeLights(Color.decode(hex), transitionTime, id);
         return "OK";
     }
 }

@@ -15,6 +15,7 @@ import javax.annotation.PostConstruct;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Controller
 public class HueController {
@@ -124,45 +125,33 @@ public class HueController {
         }
     }
 
-    public void changeLights(String lightIdentifer, Color color, int transitionTime) {
-        if ("all".equals(lightIdentifer)) {
-            List<PHLight> allLights = cache.getAllLights();
-            for (PHLight light : allLights) {
-                changeLights(light.getIdentifier(), color);
-            }
-        }
-        else {
-            PHLightState lightState = new PHLightState();
-            float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
-            lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
-            lightState.setX(xy[0]);
-            lightState.setY(xy[1]);
-            lightState.setTransitionTime(transitionTime/100); // Convert milliseconds to Hue derp centiseconds
+    public void changeLight(Color color, int transitionTime, String lightIdentifier) {
+        PHLightState lightState = new PHLightState();
+        float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
+        lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
+        lightState.setX(xy[0]);
+        lightState.setY(xy[1]);
+        lightState.setTransitionTime(transitionTime/100); // Convert milliseconds to Hue derp centiseconds
 
-            phHueSDK.getSelectedBridge().updateLightState(lightIdentifer, lightState, null);
-        }
+        phHueSDK.getSelectedBridge().updateLightState(lightIdentifier, lightState, null);
     }
 
-    public void changeLights(String[] lightIdentifiers, Color color, int transitionTime) {
+    public void changeLights(Color color, int transitionTime, String... lightIdentifiers) {
         for(String id : lightIdentifiers) {
-            changeLights(id, color, transitionTime);
+            changeLight(color, transitionTime, id);
         }
     }
 
-    public void changeLights(String[] lightIdentifiers, String rgb, int transitionTime) {
-        Color color = Color.decode(rgb);
-        changeLights(lightIdentifiers, color, transitionTime);
+    public void changeLights(Color color, String... lightIdentifiers) {
+        changeLights(color, 400, lightIdentifiers);
     }
 
-    public void changeLights(String[] lightIdentifiers, Color color) {
-        changeLights(lightIdentifiers, color, 400);
-    }
-    public void changeLights(String[] lightIdentifiers, String rgb) {
-        changeLights(lightIdentifiers, rgb, 400);
+    public void changeLights(Color color) {
+        List<String> lightIdentifiers = cache.getAllLights().stream().map(PHLight::getIdentifier).collect(Collectors.toList());
+        changeLights(color, 400, lightIdentifiers.toArray(new String[lightIdentifiers.size()]));
     }
 
-    public void changeLights(String lightIdentifier, Color color) { changeLights(lightIdentifier, color); }
-    public void changeLights(String lightIdentifier, String rgb) { changeLights(lightIdentifier, rgb); }
-
-    public List<PHLight> getLights() {  return cache.getAllLights(); }
+    public List<PHLight> getAllLights() {
+        return cache.getAllLights();
+    }
 }
