@@ -137,40 +137,32 @@ public class HueController {
             lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
             lightState.setX(xy[0]);
             lightState.setY(xy[1]);
-            lightState.setTransitionTime(transitionTime);
+            lightState.setTransitionTime(transitionTime/100); // Convert milliseconds to Hue derp centiseconds
 
             phHueSDK.getSelectedBridge().updateLightState(lightIdentifer, lightState, null);
         }
     }
 
-    public void changeLights(List<String> lightIdentifers, Color color, int transitionTime) {
-        for(String id : lightIdentifers) {
+    public void changeLights(String[] lightIdentifiers, Color color, int transitionTime) {
+        for(String id : lightIdentifiers) {
             changeLights(id, color, transitionTime);
         }
     }
 
-    public void changeLights(List<String> lightIdentifers, Color color) {
-        changeLights(lightIdentifers, color, 400);
-    }
-
-    public void changeLights(List<String> lightIdentifers, String rgb, int transitionTime) {
+    public void changeLights(String[] lightIdentifiers, String rgb, int transitionTime) {
         Color color = Color.decode(rgb);
-        changeLights(lightIdentifers, color, transitionTime);
+        changeLights(lightIdentifiers, color, transitionTime);
     }
 
-    public void changeLights(List<String> lightIdentifers, String rgb) {
-        changeLights(lightIdentifers, rgb, 400);
+    public void changeLights(String[] lightIdentifiers, Color color) {
+        changeLights(lightIdentifiers, color, 400);
+    }
+    public void changeLights(String[] lightIdentifiers, String rgb) {
+        changeLights(lightIdentifiers, rgb, 400);
     }
 
-    public void changeLights(String lightIdentifier, String rgb) {
-        changeLights(Arrays.asList(lightIdentifier), rgb);
-    }
+    public void changeLights(String lightIdentifier, Color color) { changeLights(lightIdentifier, color); }
+    public void changeLights(String lightIdentifier, String rgb) { changeLights(lightIdentifier, rgb); }
 
-    public void changeLights(String lightIdentifier, Color color) {
-        changeLights(Arrays.asList(lightIdentifier), color);
-    }
-
-    public List<PHLight> getLights() {
-        return cache.getAllLights();
-    }
+    public List<PHLight> getLights() {  return cache.getAllLights(); }
 }

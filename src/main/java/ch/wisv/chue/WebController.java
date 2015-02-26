@@ -63,7 +63,7 @@ public class WebController {
     @RequestMapping(value = "/color", method = RequestMethod.POST)
     @ResponseBody
     String colorPost(@RequestParam(value = "id[]") String[] id, @RequestParam String hex, @RequestParam(defaultValue = "400") int transitionTime) {
-        hue.changeLights(Arrays.asList(id), hex, transitionTime);
+        hue.changeLights(id, hex, transitionTime);
         return "OK";
     }
 }
