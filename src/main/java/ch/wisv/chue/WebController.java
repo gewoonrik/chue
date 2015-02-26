@@ -45,17 +45,11 @@ public class WebController {
     }
 
 
-    @RequestMapping("/oranje")
+    @RequestMapping({"/oranje", "/54"})
     @ResponseBody
     String oranje() {
         hue.changeLights("all", "#FFA723");
         return "B'voranje";
-    }
-
-    @RequestMapping("/54")
-    @ResponseBody
-    String bestuur54() {
-        return oranje();
     }
     
     @RequestMapping(value = "/color/{id}/{hex}", method = RequestMethod.GET)
