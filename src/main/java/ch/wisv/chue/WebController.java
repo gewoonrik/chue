@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,8 +62,8 @@ public class WebController {
 
     @RequestMapping(value = "/color", method = RequestMethod.POST)
     @ResponseBody
-    String colorPost(@RequestParam List<String> ids, @RequestParam String hex, @RequestParam int transitionTime) {
-        hue.changeLights(ids, hex, transitionTime);
+    String colorPost(@RequestParam(value = "id[]") String[] id, @RequestParam String hex, @RequestParam(defaultValue = "400") int transitionTime) {
+        hue.changeLights(Arrays.asList(id), hex, transitionTime);
         return "OK";
     }
 }
