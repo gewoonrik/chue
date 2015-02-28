@@ -45,19 +45,14 @@
         </p>
 
         <p>
-            <label>
-                Light(s):
-                <select multiple="multiple" id="selected_light_ids">
-                    <option th:each="light : ${lights}"
-                            th:value="${light.identifier}"
-                            th:text="${light.name}">Light Name</option>
-                </select>
-            </label>
-            <br/>
-            <label>
-                Color:
-                <input id="selected_light_color" type="color" name="hex" value="#FFA723"/>
-            </label>
+            <select multiple="multiple" id="selected_light_ids">
+                <option th:each="light : ${lights}"
+                        th:value="${light.identifier}"
+                        th:text="${light.name}"
+                        style="background: ">Light Name</option>
+            </select>
+
+           <input id="selected_light_color" type="color" name="hex" value="#eeeeee" />
         </p>
     </div>
     <div>

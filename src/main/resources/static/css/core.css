@@ -3,3 +3,37 @@ body {
     padding-bottom: 40px;
     background-color: #f5f5f5;
 }
+
+#selected_light_ids, #selected_light_color {
+    width: 200px;
+    height: 200px;
+
+    padding: 0;
+    margin: 0;
+}
+
+#selected_light_ids {
+    top: 2px;
+    position: relative;
+    background: none;
+    outline: none;
+}
+
+#selected_light_ids option {
+    padding: 10px;
+}
+
+#selected_light_ids option:hover {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#selected_light_ids option:active {
+    cursor: pointer;
+}
+
+#selected_light_color:hover {
+    border: 1px solid black;
+    cursor: pointer;
+}
+
