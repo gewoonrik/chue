@@ -48,7 +48,7 @@ public class WebController {
     @ResponseBody
     String alert(@RequestParam(value="timeout", defaultValue = "5000") Integer timeout) {
         hue.alert(timeout);
-        return String.format("Alerting for %d seconds", timeout);
+        return String.format("Alerting for %d milliseconds", timeout);
     }
 
 
