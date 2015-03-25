@@ -44,6 +44,13 @@ public class WebController {
         return "Random Colorloop";
     }
 
+    @RequestMapping("/alert")
+    @ResponseBody
+    String alert(@RequestParam(value="timeout", defaultValue = "5000") Integer timeout) {
+        hue.alert(timeout);
+        return String.format("Alerting for %d seconds", timeout);
+    }
+
 
     @RequestMapping({"/oranje", "/54"})
     @ResponseBody
