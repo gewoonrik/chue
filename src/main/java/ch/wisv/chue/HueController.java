@@ -125,6 +125,37 @@ public class HueController {
         }
     }
 
+    /**
+     * Blink the lights for a predefined amount of time, with a maximum of 30 seconds (as defined by the Hue API)
+     *
+     * @param timeout the amount of time to blink the lights, in milliseconds
+     */
+    public void alert(final int timeout) {
+        final List<PHLight> allLights = cache.getAllLights();
+
+        for (PHLight light : allLights) {
+            PHLightState lightState = new PHLightState();
+            lightState.setTransitionTime(0);
+            lightState.setAlertMode(PHLight.PHLightAlertMode.ALERT_LSELECT);
+            bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
+        }
+
+        Runnable restoreStates = () -> {
+            try {
+                Thread.sleep(timeout);
+            } catch (InterruptedException e) {
+                log.warn("Interrupted, not restoring light states! Exception: " + e.getMessage());
+            }
+            log.debug("Restoring light states.");
+            for (PHLight light : allLights) {
+                PHLightState lightState = new PHLightState();
+                lightState.setAlertMode(PHLight.PHLightAlertMode.ALERT_NONE);
+                bridge.updateLightState(light, lightState);
+            }
+        };
+        new Thread(restoreStates, "ServiceThread").start();
+    }
+
     public void changeLight(Color color, int transitionTime, String lightIdentifier) {
         PHLightState lightState = new PHLightState();
         float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
