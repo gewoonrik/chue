@@ -1,11 +1,17 @@
 package ch.wisv.chue;
 
+import ch.wisv.chue.events.HueEvent;
+import ch.wisv.chue.states.HueState;
+import com.philips.lighting.model.PHLight;
+import com.philips.lighting.model.PHLightState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 
 import java.awt.*;
+import java.util.List;
+import java.util.Random;
 
 /**
  * Spring MVC Web Controller
@@ -25,14 +31,40 @@ public class WebController {
     @RequestMapping("/random")
     @ResponseBody
     String random() {
-        hue.randomLights();
+        hue.loadEvent(new HueEvent() {
+            @Override
+            public void execute() {
+                List<PHLight> allLights = cache.getAllLights();
+                Random rand = new Random();
+
+                for (PHLight light : allLights) {
+                    int randHue = rand.nextInt(hue.MAX_HUE);
+
+                    PHLightState lightState = new PHLightState();
+                    lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
+                    lightState.setHue(randHue);
+                    bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
+                }
+            }
+        }, 1000);
         return "Randomised";
     }
 
     @RequestMapping("/colorloop")
     @ResponseBody
     String colorLoop() {
-        hue.colorLoop();
+        hue.loadState(new HueState() {
+            @Override
+            public void execute() {
+                List<PHLight> allLights = cache.getAllLights();
+
+                for (PHLight light : allLights) {
+                    PHLightState lightState = new PHLightState();
+                    lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_COLORLOOP);
+                    bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
+                }
+            }
+        });
         return "Colorloop";
     }
 

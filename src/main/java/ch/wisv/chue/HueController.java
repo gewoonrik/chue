@@ -1,5 +1,7 @@
 package ch.wisv.chue;
 
+import ch.wisv.chue.events.HueEvent;
+import ch.wisv.chue.states.HueState;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.hue.sdk.PHMessageType;
@@ -13,13 +15,18 @@ import org.springframework.stereotype.Controller;
 
 import javax.annotation.PostConstruct;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Controller
 public class HueController {
-    private static final int MAX_HUE = 65535;
+
+    public interface Command {
+        void execute();
+    }
+
+    public static final int MAX_HUE = 65535;
     private static final Logger log = LoggerFactory.getLogger(HueController.class);
 
     @Value("${BridgeUsername}")
@@ -30,6 +37,8 @@ public class HueController {
     private PHHueSDK phHueSDK = PHHueSDK.getInstance();
     private PHBridge bridge;
     private PHBridgeResourcesCache cache;
+
+    private Command restoreState;
 
     /**
      * Connect to the last known access point.
@@ -102,6 +111,35 @@ public class HueController {
         }
     };
 
+    public void loadState(HueState state) {
+        state.setBridge(this.bridge);
+        state.setCache(this.cache);
+        restoreState = () -> {
+            log.info("Restore triggered!");
+            state.execute();
+        };
+
+        state.execute();
+    }
+
+    public void loadEvent(HueEvent event, int duration) {
+        event.setBridge(this.bridge);
+        event.setCache(this.cache);
+        event.execute();
+
+        Runnable restore = () -> {
+            try {
+                Thread.sleep(duration);
+            }
+            catch(InterruptedException e) {
+                log.warn("Interrupted, not restoring light states! Exception: " + e.getMessage());
+            }
+            log.info("Restoring light states after event.");
+            this.restoreState.execute();
+        };
+        new Thread(restore, "ServiceThread");
+    }
+
     public void randomLights() {
         List<PHLight> allLights = cache.getAllLights();
         Random rand = new Random();
@@ -116,7 +154,6 @@ public class HueController {
 
     public void colorLoop() {
         List<PHLight> allLights = cache.getAllLights();
-        Random rand = new Random();
 
         for (PHLight light : allLights) {
             PHLightState lightState = new PHLightState();
