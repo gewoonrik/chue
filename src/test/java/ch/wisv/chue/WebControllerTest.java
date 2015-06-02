@@ -10,7 +10,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,15 +30,22 @@ public class WebControllerTest {
     }
 
     @Test
-    public void testAlert() throws Exception {
-        mockMvc.perform(get("/alert"))
+    public void testAlertAll() throws Exception {
+        mockMvc.perform(get("/alert/all"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(is("Alerting for 5000 milliseconds")));
     }
 
     @Test
-    public void testAlertTimeOut() throws Exception {
-        mockMvc.perform(get("/alert")
+    public void testAlertSingle() throws Exception {
+        mockMvc.perform(get("/alert/1"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(is("Alerting for 5000 milliseconds")));
+    }
+
+    @Test
+    public void testAlertAllTimeOut() throws Exception {
+        mockMvc.perform(get("/alert/all")
                 .param("timeout", "100"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(is("Alerting for 100 milliseconds")));
@@ -78,14 +84,5 @@ public class WebControllerTest {
         mockMvc.perform(get("/color/2/blue"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(is("Changed colour of lamps (2) to #0000ff")));
-    }
-
-    @Test
-    public void testColorPost() throws Exception {
-        mockMvc.perform((post("/color"))
-                .param("id[]", "1,2")
-                .param("hex", "#cc0000"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(is("Changed colour of lamps ([1, 2]) to #cc0000")));
     }
 }

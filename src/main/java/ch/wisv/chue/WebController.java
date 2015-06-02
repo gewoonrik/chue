@@ -1,5 +1,10 @@
 package ch.wisv.chue;
 
+import ch.wisv.chue.events.Alert;
+import ch.wisv.chue.states.ColorLoopState;
+import ch.wisv.chue.states.ColorState;
+import ch.wisv.chue.states.RandomColorLoopState;
+import ch.wisv.chue.states.RandomColorState;
 import javafx.scene.paint.Color;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -23,10 +28,10 @@ public class WebController {
         return "index";
     }
 
-    @RequestMapping("/random")
+    @RequestMapping("/random/{id}")
     @ResponseBody
-    String random() {
-        hue.randomLights();
+    String random(@PathVariable String id) {
+        hue.loadState(new RandomColorState(), id);
         return "Randomised";
     }
 
@@ -34,35 +39,34 @@ public class WebController {
     @ResponseBody
     String strobeAll(@RequestParam(value = "duration", defaultValue = "500") Integer duration) {
         hue.strobe(duration);
-        return "Strobe for duration="+duration+"ms";
+        return "Strobe for duration=" + duration + "ms";
     }
 
     @RequestMapping("/strobe")
     @ResponseBody
     String strobe(@RequestParam(value = "id[]") String[] id, @RequestParam(value = "duration", defaultValue = "500") Integer duration) {
         hue.strobe(duration, id);
-        return "Strobe lamps (" + Arrays.asList(id) + ") for duration="+duration+"ms";
+        return "Strobe lamps (" + Arrays.asList(id) + ") for duration=" + duration + "ms";
     }
 
-    @RequestMapping("/colorloop")
+    @RequestMapping("/colorloop/{id}")
     @ResponseBody
-    String colorLoop() {
-        hue.colorLoop();
+    String colorLoop(@PathVariable String id) {
+        hue.loadState(new ColorLoopState(), id);
         return "Colorloop";
     }
 
-    @RequestMapping("/randomcolorloop")
+    @RequestMapping("/randomcolorloop/{id}")
     @ResponseBody
-    String randomColorLoop() {
-        hue.randomLights();
-        hue.colorLoop();
+    String randomColorLoop(@PathVariable String id) {
+        hue.loadState(new RandomColorLoopState(), id);
         return "Random Colorloop";
     }
 
-    @RequestMapping("/alert")
+    @RequestMapping("/alert/{id}")
     @ResponseBody
-    String alert(@RequestParam(value = "timeout", defaultValue = "5000") Integer timeout) {
-        hue.alert(timeout);
+    String alert(@RequestParam(value = "timeout", defaultValue = "5000") Integer timeout, @PathVariable String id) {
+        hue.loadEvent(new Alert(), timeout, id);
         return String.format("Alerting for %d milliseconds", timeout);
     }
 
@@ -70,7 +74,7 @@ public class WebController {
     @RequestMapping({"/oranje", "/54"})
     @ResponseBody
     String oranje() {
-        hue.changeLights(Color.web("#FFA723"));
+        hue.loadState(new ColorState(Color.web("#FFA723")));
         return "B'voranje";
     }
 
@@ -79,11 +83,7 @@ public class WebController {
     String color(@PathVariable String id, @PathVariable String hex) {
         Color color = Color.web('#' + hex);
 
-        if ("all".equals(id)) {
-            hue.changeLights(color);
-        } else {
-            hue.changeLights(color, id);
-        }
+        hue.loadState(new ColorState(color), id);
 
         return "Changed colour of lamps (" + id + ") to #" + hex;
     }
@@ -93,23 +93,11 @@ public class WebController {
     String colorFriendly(@PathVariable String id, @PathVariable String colorName) {
         Color color = Color.valueOf(colorName);
 
-        if ("all".equals(id)) {
-            hue.changeLights(color);
-        } else {
-            hue.changeLights(color, id);
-        }
+        hue.loadState(new ColorState(color), id);
 
         String hex = String.format("%02x%02x%02x",
                 (int) (color.getRed() * 255), (int) (color.getGreen() * 255), (int) (color.getBlue() * 255));
 
         return "Changed colour of lamps (" + id + ") to #" + hex;
-    }
-
-    @RequestMapping(value = "/color", method = RequestMethod.POST)
-    @ResponseBody
-    String colorPost(@RequestParam(value = "id[]") String[] id, @RequestParam String hex, @RequestParam(defaultValue = "400") int transitionTime) {
-        hue.changeLights(Color.web(hex), transitionTime, id);
-
-        return "Changed colour of lamps (" + Arrays.asList(id) + ") to " + hex;
     }
 }
