@@ -9,7 +9,7 @@ import com.philips.lighting.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.awt.*;
@@ -17,10 +17,10 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Controller
-public class HueController {
+@Service
+public class HueService {
     private static final int MAX_HUE = 65535;
-    private static final Logger log = LoggerFactory.getLogger(HueController.class);
+    private static final Logger log = LoggerFactory.getLogger(HueService.class);
 
     @Value("${BridgeUsername}")
     private String username;
@@ -63,8 +63,8 @@ public class HueController {
         public void onBridgeConnected(PHBridge bridge) {
             phHueSDK.setSelectedBridge(bridge);
             phHueSDK.enableHeartbeat(bridge, PHHueSDK.HB_INTERVAL);
-            HueController.this.bridge = bridge;
-            HueController.this.cache = bridge.getResourceCache();
+            HueService.this.bridge = bridge;
+            HueService.this.cache = bridge.getResourceCache();
             log.info("Connected");
         }
 
