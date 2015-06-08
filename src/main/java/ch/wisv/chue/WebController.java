@@ -14,7 +14,7 @@ import java.awt.*;
 public class WebController {
 
     @Autowired
-    HueController hue;
+    HueService hue;
 
     @RequestMapping("/")
     String index(Model model) {
