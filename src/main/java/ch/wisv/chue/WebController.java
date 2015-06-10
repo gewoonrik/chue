@@ -1,11 +1,10 @@
 package ch.wisv.chue;
 
+import javafx.scene.paint.Color;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
-
-import java.awt.*;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * Spring MVC Web Controller
@@ -46,7 +45,7 @@ public class WebController {
 
     @RequestMapping("/alert")
     @ResponseBody
-    String alert(@RequestParam(value="timeout", defaultValue = "5000") Integer timeout) {
+    String alert(@RequestParam(value = "timeout", defaultValue = "5000") Integer timeout) {
         hue.alert(timeout);
         return String.format("Alerting for %d milliseconds", timeout);
     }
@@ -55,17 +54,28 @@ public class WebController {
     @RequestMapping({"/oranje", "/54"})
     @ResponseBody
     String oranje() {
-        hue.changeLights(Color.decode("#FFA723"));
+        hue.changeLights(Color.web("#FFA723"));
         return "B'voranje";
     }
-    
-    @RequestMapping(value = "/color/{id}/{hex}", method = RequestMethod.GET)
+
+    @RequestMapping(value = "/color/{id}/{hex:[a-fA-F0-9]{6}}", method = RequestMethod.GET)
     @ResponseBody
     String color(@PathVariable String id, @PathVariable String hex) {
-        if("all".equals(id)) {
-            hue.changeLights(Color.decode('#' + hex));
+        if ("all".equals(id)) {
+            hue.changeLights(Color.web('#' + hex));
         } else {
-            hue.changeLights(Color.decode('#' + hex), id);
+            hue.changeLights(Color.web('#' + hex), id);
+        }
+        return "OK";
+    }
+
+    @RequestMapping(value = "/color/{id}/{colorName:(?![a-fA-F0-9]{6}).*}", method = RequestMethod.GET)
+    @ResponseBody
+    String colorFriendly(@PathVariable String id, @PathVariable String colorName) {
+        if ("all".equals(id)) {
+            hue.changeLights(Color.valueOf(colorName));
+        } else {
+            hue.changeLights(Color.valueOf(colorName), id);
         }
         return "OK";
     }
@@ -73,7 +83,7 @@ public class WebController {
     @RequestMapping(value = "/color", method = RequestMethod.POST)
     @ResponseBody
     String colorPost(@RequestParam(value = "id[]") String[] id, @RequestParam String hex, @RequestParam(defaultValue = "400") int transitionTime) {
-        hue.changeLights(Color.decode(hex), transitionTime, id);
+        hue.changeLights(Color.web(hex), transitionTime, id);
         return "OK";
     }
 }
