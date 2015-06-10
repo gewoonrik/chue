@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.awt.*;
+import javafx.scene.paint.Color;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,14 +26,14 @@ public class HueService {
     private String username;
     @Value("${BridgeHostname}")
     private String hostname;
-    
+
     private PHHueSDK phHueSDK = PHHueSDK.getInstance();
     private PHBridge bridge;
     private PHBridgeResourcesCache cache;
 
     /**
      * Connect to the last known access point.
-     * This method is triggered by the Connect to Bridge button but it can equally be used to automatically connect 
+     * This method is triggered by the Connect to Bridge button but it can equally be used to automatically connect
      * * to a bridge.
      */
     @PostConstruct
@@ -116,7 +116,6 @@ public class HueService {
 
     public void colorLoop() {
         List<PHLight> allLights = cache.getAllLights();
-        Random rand = new Random();
 
         for (PHLight light : allLights) {
             PHLightState lightState = new PHLightState();
@@ -158,7 +157,8 @@ public class HueService {
 
     public void changeLight(Color color, int transitionTime, String lightIdentifier) {
         PHLightState lightState = new PHLightState();
-        float xy[] = PHUtilities.calculateXYFromRGB(color.getRed(), color.getGreen(), color.getBlue(), "LCT001");
+        float xy[] = PHUtilities.calculateXYFromRGB(
+                (int) (color.getRed() * 255), (int) (color.getGreen() * 255), (int) (color.getBlue() * 255), "LCT001");
         lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
         lightState.setX(xy[0]);
         lightState.setY(xy[1]);
