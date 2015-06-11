@@ -86,7 +86,7 @@ public class WebController {
         }
 
         String hex = String.format("%02x%02x%02x",
-                (int) (color.getRed() * 255), (int) (color.getBlue() * 255), (int) (color.getGreen() * 255));
+                (int) (color.getRed() * 255), (int) (color.getGreen() * 255), (int) (color.getBlue() * 255));
 
         return "Changed colour of lamps (" + id + ") to #" + hex;
     }
