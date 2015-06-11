@@ -6,6 +6,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
+
 /**
  * Spring MVC Web Controller
  */
@@ -61,29 +63,40 @@ public class WebController {
     @RequestMapping(value = "/color/{id}/{hex:[a-fA-F0-9]{6}}", method = RequestMethod.GET)
     @ResponseBody
     String color(@PathVariable String id, @PathVariable String hex) {
+        Color color = Color.web('#' + hex);
+
         if ("all".equals(id)) {
-            hue.changeLights(Color.web('#' + hex));
+            hue.changeLights(color);
         } else {
-            hue.changeLights(Color.web('#' + hex), id);
+            hue.changeLights(color, id);
         }
-        return "OK";
+
+        return "Changed colour of lamps (" + id + ") to #" + hex;
     }
 
     @RequestMapping(value = "/color/{id}/{colorName:(?![a-fA-F0-9]{6}).*}", method = RequestMethod.GET)
     @ResponseBody
     String colorFriendly(@PathVariable String id, @PathVariable String colorName) {
+        Color color = Color.valueOf(colorName);
+
         if ("all".equals(id)) {
-            hue.changeLights(Color.valueOf(colorName));
+            hue.changeLights(color);
         } else {
-            hue.changeLights(Color.valueOf(colorName), id);
+            hue.changeLights(color, id);
         }
-        return "OK";
+
+        String hex = String.format("%02x", (int) (color.getRed() * 255))
+                + String.format("%02x", (int) (color.getBlue() * 255))
+                + String.format("%02x", (int) (color.getGreen() * 255));
+
+        return "Changed colour of lamps (" + id + ") to #" + hex;
     }
 
     @RequestMapping(value = "/color", method = RequestMethod.POST)
     @ResponseBody
     String colorPost(@RequestParam(value = "id[]") String[] id, @RequestParam String hex, @RequestParam(defaultValue = "400") int transitionTime) {
         hue.changeLights(Color.web(hex), transitionTime, id);
-        return "OK";
+
+        return "Changed colour of lamps (" + Arrays.asList(id) + ") to " + hex;
     }
 }
