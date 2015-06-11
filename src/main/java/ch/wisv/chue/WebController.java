@@ -85,9 +85,8 @@ public class WebController {
             hue.changeLights(color, id);
         }
 
-        String hex = String.format("%02x", (int) (color.getRed() * 255))
-                + String.format("%02x", (int) (color.getBlue() * 255))
-                + String.format("%02x", (int) (color.getGreen() * 255));
+        String hex = String.format("%02x%02x%02x",
+                (int) (color.getRed() * 255), (int) (color.getBlue() * 255), (int) (color.getGreen() * 255));
 
         return "Changed colour of lamps (" + id + ") to #" + hex;
     }
