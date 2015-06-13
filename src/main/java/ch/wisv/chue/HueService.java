@@ -162,29 +162,41 @@ public class HueService {
     }
 
     /**
-     * Strobes for 10 seconds
+     * Strobes for some time
+     * @param millis duration
+     * @param lightIdentifiers which ligts
+     * @see <a href="http://www.lmeijer.nl/archives/225-Do-hue-want-a-strobe-up-there.html">Strobe with Hue by Leon Meijer</a>
      */
-
-    public void strobe() {
+    public void strobe(int millis, String... lightIdentifiers) {
         PHHueHttpConnection connection = new PHHueHttpConnection();
-        final List<PHLight> allLights = cache.getAllLights();
         final String httpAddress = ((PHLocalBridgeDelegator)((PHBridgeImpl)bridge).getBridgeDelegator()).buildHttpAddress().toString();
-        //internal API calls ahead
-        //see: http://www.lmeijer.nl/archives/225-Do-hue-want-a-strobe-up-there.html
-        JSONObject pointSymbol = new JSONObject();
-        pointSymbol.put("1", "0A00F1F01F1F1001F1FF100000000001F2F");
 
-        for (PHLight light : allLights) {
-            connection.putData(pointSymbol.toString(),
-                    httpAddress+"/lights/" + light.getIdentifier() + "/pointsymbol");
+        // Put a light definition aka `symbol` at bulb, using internal API call
+        for (String light : lightIdentifiers) {
+            JSONObject pointSymbol = new JSONObject();
+            pointSymbol.put("1", "0A00F1F01F1F1001F1FF100000000001F2F");
+            String resp = connection.putData(pointSymbol.toString(), httpAddress + "lights/" + light + "/pointsymbol");
+            log.debug(resp);
         }
 
+        // Activate symbol
+        // Kinda magic symbolselection. It is something like this:
+        // for 01..05 step 01, [0i0x]+ where i is `symbol` and x is light bulb
         JSONObject strobeJSON = new JSONObject();
-        strobeJSON.put("symbolselection", "01010501010102010301040105");
-        strobeJSON.put("duration", "10000");
+        strobeJSON.put("symbolselection", "01010501020102010301040105");
+        strobeJSON.put("duration", millis);
         //group 0 contains all lights
-        connection.putData(strobeJSON.toString(),
-                httpAddress+"/groups/0/transmitsymbol");
+        String resp = connection.putData(strobeJSON.toString(), httpAddress + "groups/0/transmitsymbol");
+        log.debug(resp);
+    }
+
+    public void strobe(int millis){
+        final List<PHLight> allLights = cache.getAllLights();
+        String[] ls = new String[allLights.size()];
+        for (int i = 0; i < allLights.size(); i++) {
+            ls[i] = allLights.get(i).getIdentifier();
+        }
+        strobe(millis, ls);
     }
 
     public void changeLight(Color color, int transitionTime, String lightIdentifier) {

@@ -30,13 +30,19 @@ public class WebController {
         return "Randomised";
     }
 
-    @RequestMapping("/strobe")
+    @RequestMapping("/strobe/all")
     @ResponseBody
-    String strobe() {
-        hue.strobe();
-        return "Strobe";
+    String strobeAll(@RequestParam(value = "duration", defaultValue = "500") Integer duration) {
+        hue.strobe(duration);
+        return "Strobe for duration="+duration+"ms";
     }
 
+    @RequestMapping("/strobe")
+    @ResponseBody
+    String strobe(@RequestParam(value = "id[]") String[] id, @RequestParam(value = "duration", defaultValue = "500") Integer duration) {
+        hue.strobe(duration, id);
+        return "Strobe lamps (" + Arrays.asList(id) + ") for duration="+duration+"ms";
+    }
 
     @RequestMapping("/colorloop")
     @ResponseBody
