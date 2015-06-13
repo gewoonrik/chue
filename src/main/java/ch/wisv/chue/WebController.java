@@ -30,6 +30,14 @@ public class WebController {
         return "Randomised";
     }
 
+    @RequestMapping("/strobe")
+    @ResponseBody
+    String strobe() {
+        hue.strobe();
+        return "Strobe";
+    }
+
+
     @RequestMapping("/colorloop")
     @ResponseBody
     String colorLoop() {

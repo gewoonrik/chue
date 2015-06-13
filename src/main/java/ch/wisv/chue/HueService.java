@@ -4,15 +4,21 @@ import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.hue.sdk.PHMessageType;
 import com.philips.lighting.hue.sdk.PHSDKListener;
+import com.philips.lighting.hue.sdk.bridge.impl.PHBridgeImpl;
+import com.philips.lighting.hue.sdk.connection.impl.PHHueHttpConnection;
+import com.philips.lighting.hue.sdk.connection.impl.PHLocalBridgeDelegator;
 import com.philips.lighting.hue.sdk.utilities.PHUtilities;
 import com.philips.lighting.model.*;
+import org.json.hue.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+
 import javafx.scene.paint.Color;
+
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -155,6 +161,32 @@ public class HueService {
         new Thread(restoreStates, "ServiceThread").start();
     }
 
+    /**
+     * Strobes for 10 seconds
+     */
+
+    public void strobe() {
+        PHHueHttpConnection connection = new PHHueHttpConnection();
+        final List<PHLight> allLights = cache.getAllLights();
+        final String httpAddress = ((PHLocalBridgeDelegator)((PHBridgeImpl)bridge).getBridgeDelegator()).buildHttpAddress().toString();
+        //internal API calls ahead
+        //see: http://www.lmeijer.nl/archives/225-Do-hue-want-a-strobe-up-there.html
+        JSONObject pointSymbol = new JSONObject();
+        pointSymbol.put("1", "0A00F1F01F1F1001F1FF100000000001F2F");
+
+        for (PHLight light : allLights) {
+            connection.putData(pointSymbol.toString(),
+                    httpAddress+"/lights/" + light.getIdentifier() + "/pointsymbol");
+        }
+
+        JSONObject strobeJSON = new JSONObject();
+        strobeJSON.put("symbolselection", "01010501010102010301040105");
+        strobeJSON.put("duration", "10000");
+        //group 0 contains all lights
+        connection.putData(strobeJSON.toString(),
+                httpAddress+"/groups/0/transmitsymbol");
+    }
+
     public void changeLight(Color color, int transitionTime, String lightIdentifier) {
         PHLightState lightState = new PHLightState();
         float xy[] = PHUtilities.calculateXYFromRGB(
@@ -162,13 +194,13 @@ public class HueService {
         lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
         lightState.setX(xy[0]);
         lightState.setY(xy[1]);
-        lightState.setTransitionTime(transitionTime/100); // Convert milliseconds to Hue derp centiseconds
+        lightState.setTransitionTime(transitionTime / 100); // Convert milliseconds to Hue derp centiseconds
 
         phHueSDK.getSelectedBridge().updateLightState(lightIdentifier, lightState, null);
     }
 
     public void changeLights(Color color, int transitionTime, String... lightIdentifiers) {
-        for(String id : lightIdentifiers) {
+        for (String id : lightIdentifiers) {
             changeLight(color, transitionTime, id);
         }
     }
