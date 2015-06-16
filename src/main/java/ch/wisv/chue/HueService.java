@@ -1,5 +1,8 @@
 package ch.wisv.chue;
 
+import ch.wisv.chue.events.IHueEvent;
+import ch.wisv.chue.states.BlankState;
+import ch.wisv.chue.states.IHueState;
 import com.philips.lighting.hue.sdk.PHAccessPoint;
 import com.philips.lighting.hue.sdk.PHHueSDK;
 import com.philips.lighting.hue.sdk.PHMessageType;
@@ -7,8 +10,10 @@ import com.philips.lighting.hue.sdk.PHSDKListener;
 import com.philips.lighting.hue.sdk.bridge.impl.PHBridgeImpl;
 import com.philips.lighting.hue.sdk.connection.impl.PHHueHttpConnection;
 import com.philips.lighting.hue.sdk.connection.impl.PHLocalBridgeDelegator;
-import com.philips.lighting.hue.sdk.utilities.PHUtilities;
-import com.philips.lighting.model.*;
+import com.philips.lighting.model.PHBridge;
+import com.philips.lighting.model.PHHueError;
+import com.philips.lighting.model.PHHueParsingError;
+import com.philips.lighting.model.PHLight;
 import org.json.hue.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,17 +21,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-
-import javafx.scene.paint.Color;
-
-import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class HueService {
-    private static final int MAX_HUE = 65535;
+
+    public static final int MAX_HUE = 65535;
     private static final Logger log = LoggerFactory.getLogger(HueService.class);
+
+    public interface Command {
+        void execute();
+    }
 
     @Value("${BridgeUsername}")
     private String username;
@@ -35,7 +40,8 @@ public class HueService {
 
     private PHHueSDK phHueSDK = PHHueSDK.getInstance();
     private PHBridge bridge;
-    private PHBridgeResourcesCache cache;
+
+    private Command restoreState;
 
     /**
      * Connect to the last known access point.
@@ -70,7 +76,6 @@ public class HueService {
             phHueSDK.setSelectedBridge(bridge);
             phHueSDK.enableHeartbeat(bridge, PHHueSDK.HB_INTERVAL);
             HueService.this.bridge = bridge;
-            HueService.this.cache = bridge.getResourceCache();
             log.info("Connected");
         }
 
@@ -108,68 +113,61 @@ public class HueService {
         }
     };
 
-    public void randomLights() {
-        List<PHLight> allLights = cache.getAllLights();
-        Random rand = new Random();
-
-        for (PHLight light : allLights) {
-            PHLightState lightState = new PHLightState();
-            lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
-            lightState.setHue(rand.nextInt(MAX_HUE));
-            bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
+    private String[] getLightIdentifiers(String... lightIdentifiers) {
+        if ("all".equals(lightIdentifiers[0])) {
+            List<PHLight> lights = getAllLights();
+            String[] res = new String[lights.size()];
+            for (int i = 0; i < lights.size(); i++) {
+                res[i] = lights.get(i).getIdentifier();
+            }
+            return res;
+        } else {
+            return lightIdentifiers;
         }
     }
 
-    public void colorLoop() {
-        List<PHLight> allLights = cache.getAllLights();
+    public void loadState(IHueState state, String... lightIdentifiers) {
+        String[] ids = getLightIdentifiers(lightIdentifiers);
+        restoreState = () -> {
+            new BlankState().execute(this.bridge, ids);
+            state.execute(this.bridge, ids);
+            log.debug("Light states restored!");
+        };
 
-        for (PHLight light : allLights) {
-            PHLightState lightState = new PHLightState();
-            lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_COLORLOOP);
-            bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
-        }
+        // Set everything to default before loading state.
+        new BlankState().execute(this.bridge, ids);
+        state.execute(this.bridge, ids);
     }
 
-    /**
-     * Blink the lights for a predefined amount of time, with a maximum of 30 seconds (as defined by the Hue API)
-     *
-     * @param timeout the amount of time to blink the lights, in milliseconds
-     */
-    public void alert(final int timeout) {
-        final List<PHLight> allLights = cache.getAllLights();
+    public void loadEvent(IHueEvent event, int duration, String... lightIdentifiers) {
+        String[] ids = getLightIdentifiers(lightIdentifiers);
+        event.execute(this.bridge, ids);
 
-        for (PHLight light : allLights) {
-            PHLightState lightState = new PHLightState();
-            lightState.setTransitionTime(0);
-            lightState.setAlertMode(PHLight.PHLightAlertMode.ALERT_LSELECT);
-            bridge.updateLightState(light, lightState); // If no bridge response is required then use this simpler form.
-        }
-
-        Runnable restoreStates = () -> {
+        Runnable restore = () -> {
             try {
-                Thread.sleep(timeout);
+                Thread.sleep(duration);
             } catch (InterruptedException e) {
                 log.warn("Interrupted, not restoring light states! Exception: " + e.getMessage());
             }
-            log.debug("Restoring light states.");
-            for (PHLight light : allLights) {
-                PHLightState lightState = new PHLightState();
-                lightState.setAlertMode(PHLight.PHLightAlertMode.ALERT_NONE);
-                bridge.updateLightState(light, lightState);
-            }
+            log.debug("Restoring light states after event.");
+            if (this.restoreState != null)
+                this.restoreState.execute();
+            else
+                new BlankState().execute(this.bridge, lightIdentifiers);
         };
-        new Thread(restoreStates, "ServiceThread").start();
+        new Thread(restore, "ServiceThread").start();
     }
 
     /**
      * Strobes for some time
-     * @param millis duration
+     *
+     * @param millis           duration
      * @param lightIdentifiers which ligts
      * @see <a href="http://www.lmeijer.nl/archives/225-Do-hue-want-a-strobe-up-there.html">Strobe with Hue by Leon Meijer</a>
      */
     public void strobe(int millis, String... lightIdentifiers) {
         PHHueHttpConnection connection = new PHHueHttpConnection();
-        final String httpAddress = ((PHLocalBridgeDelegator)((PHBridgeImpl)bridge).getBridgeDelegator()).buildHttpAddress().toString();
+        final String httpAddress = ((PHLocalBridgeDelegator) ((PHBridgeImpl) bridge).getBridgeDelegator()).buildHttpAddress().toString();
 
         // Put a light definition aka `symbol` at bulb, using internal API call
         for (String light : lightIdentifiers) {
@@ -190,8 +188,8 @@ public class HueService {
         log.debug(resp);
     }
 
-    public void strobe(int millis){
-        final List<PHLight> allLights = cache.getAllLights();
+    public void strobe(int millis) {
+        final List<PHLight> allLights = bridge.getResourceCache().getAllLights();
         String[] ls = new String[allLights.size()];
         for (int i = 0; i < allLights.size(); i++) {
             ls[i] = allLights.get(i).getIdentifier();
@@ -199,34 +197,7 @@ public class HueService {
         strobe(millis, ls);
     }
 
-    public void changeLight(Color color, int transitionTime, String lightIdentifier) {
-        PHLightState lightState = new PHLightState();
-        float xy[] = PHUtilities.calculateXYFromRGB(
-                (int) (color.getRed() * 255), (int) (color.getGreen() * 255), (int) (color.getBlue() * 255), "LCT001");
-        lightState.setEffectMode(PHLight.PHLightEffectMode.EFFECT_NONE);
-        lightState.setX(xy[0]);
-        lightState.setY(xy[1]);
-        lightState.setTransitionTime(transitionTime / 100); // Convert milliseconds to Hue derp centiseconds
-
-        phHueSDK.getSelectedBridge().updateLightState(lightIdentifier, lightState, null);
-    }
-
-    public void changeLights(Color color, int transitionTime, String... lightIdentifiers) {
-        for (String id : lightIdentifiers) {
-            changeLight(color, transitionTime, id);
-        }
-    }
-
-    public void changeLights(Color color, String... lightIdentifiers) {
-        changeLights(color, 400, lightIdentifiers);
-    }
-
-    public void changeLights(Color color) {
-        List<String> lightIdentifiers = cache.getAllLights().stream().map(PHLight::getIdentifier).collect(Collectors.toList());
-        changeLights(color, 400, lightIdentifiers.toArray(new String[lightIdentifiers.size()]));
-    }
-
     public List<PHLight> getAllLights() {
-        return cache.getAllLights();
+        return bridge.getResourceCache().getAllLights();
     }
 }
