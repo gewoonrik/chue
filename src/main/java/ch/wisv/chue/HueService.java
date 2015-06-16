@@ -177,15 +177,20 @@ public class HueService {
             log.debug(resp);
         }
 
-        // Activate symbol
-        // Kinda magic symbolselection. It is something like this:
-        // for 01..05 step 01, [0i0x]+ where i is `symbol` and x is light bulb
-        JSONObject strobeJSON = new JSONObject();
-        strobeJSON.put("symbolselection", "01010301010102010301");
-        strobeJSON.put("duration", millis);
-        //group 0 contains all lights
-        String resp = connection.putData(strobeJSON.toString(), httpAddress + "groups/0/transmitsymbol");
-        log.debug(resp);
+        boolean allLightsTurnedOn = bridge.getResourceCache().getAllLights().stream()
+                .allMatch(light -> light.getLastKnownLightState().isOn());
+
+        if(allLightsTurnedOn) {
+            // Activate symbol
+            // Kinda magic symbolselection. It is something like this:
+            // for 01..05 step 01, [0i0x]+ where i is `symbol` and x is light bulb
+            JSONObject strobeJSON = new JSONObject();
+            strobeJSON.put("symbolselection", "01010301010102010301");
+            strobeJSON.put("duration", millis);
+            //group 0 contains all lights
+            String resp = connection.putData(strobeJSON.toString(), httpAddress + "groups/0/transmitsymbol");
+            log.debug(resp);
+        }
     }
 
     public void strobe(int millis) {
